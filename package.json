@@ -6,11 +6,17 @@
   "pi": {
     "extensions": ["./src/index.ts"]
   },
+  "scripts": {
+    "test": "tsx --test test/**/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
   "dependencies": {},
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "latest",
     "@earendil-works/pi-tui": "latest",
     "typebox": "latest",
+    "tsx": "^4.20.0",
     "typescript": "^5.7.0",
     "@types/node": "^22.0.0"
   }

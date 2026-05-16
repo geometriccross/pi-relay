@@ -43,11 +43,13 @@ export function detectParentFromEnv(): {
 
   if (!familyId || !parentSession) return null;
 
+  const childIndex = childIndexStr ? parseInt(childIndexStr, 10) : 0;
+
   return {
     familyId,
     parentSessionId: parentSession,
     parentName,
-    childIndex: childIndexStr ? parseInt(childIndexStr, 10) : 0,
+    childIndex: Number.isFinite(childIndex) ? childIndex : 0,
   };
 }
 
