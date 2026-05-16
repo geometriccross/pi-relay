@@ -1,0 +1,17 @@
+{
+  "name": "pi-family",
+  "version": "0.1.0",
+  "description": "Pi extension for parent-child shell session communication",
+  "main": "src/index.ts",
+  "pi": {
+    "extensions": ["./src/index.ts"]
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "latest",
+    "@earendil-works/pi-tui": "latest",
+    "typebox": "latest",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
