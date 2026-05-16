@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 
-import { detectParentFromEnv } from "../src/family.js";
+import { buildChildEnv, detectParentFromEnv } from "../src/family.js";
 import {
   FAMILY_ENV_CHILD_INDEX,
   FAMILY_ENV_FAMILY_ID,
@@ -27,4 +27,18 @@ test("detectParentFromEnv normalizes invalid child index to zero", () => {
     parentName: "Parent",
     childIndex: 0,
   });
+});
+
+test("buildChildEnv includes all variables required by a child session", () => {
+  assert.deepEqual(
+    buildChildEnv("parent-1", "Parent", "family-1", 3, "child-1"),
+    {
+      PI_FAMILY_SESSION_ID: "child-1",
+      PI_FAMILY_ID: "family-1",
+      PI_FAMILY_ROLE: "child",
+      PI_FAMILY_PARENT_SESSION: "parent-1",
+      PI_FAMILY_PARENT_NAME: "Parent",
+      PI_FAMILY_CHILD_INDEX: "3",
+    },
+  );
 });
