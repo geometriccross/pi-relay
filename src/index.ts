@@ -11,7 +11,7 @@
  * - Auto-registration in shared family directory
  */
 
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { AgentToolResult, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { Text } from "@earendil-works/pi-tui";
 import { randomUUID } from "crypto";
@@ -71,6 +71,25 @@ function getErrorMessage(error: unknown): string {
 
 function shortId(id: string): string {
   return id.slice(0, 8);
+}
+
+type FamilyToolDetails = { ok: boolean; error?: string };
+
+function textResult(text: string, ok = true): AgentToolResult<FamilyToolDetails> {
+  return {
+    content: [{ type: "text", text }],
+    details: ok ? { ok: true } : { ok: false, error: text },
+  };
+}
+
+function getResultText(result: AgentToolResult<unknown>): string {
+  const first = result.content[0];
+  return first?.type === "text" ? first.text : "";
+}
+
+function isFailedResult(result: AgentToolResult<unknown>, context: { isError?: boolean }): boolean {
+  const details = result.details as Partial<FamilyToolDetails> | undefined;
+  return context.isError === true || details?.ok === false;
 }
 
 function formatAttachment(att: FamilyMessage["attachments"]): string {
@@ -329,10 +348,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
     }),
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       if (!isConnected() || !parentInfo) {
-        return {
-          content: [{ type: "text", text: "Not a child session or parent not detected." }],
-          isError: true,
-        };
+        return textResult("Not a child session or parent not detected.", false);
       }
 
       const messageId = sendMessage(getMailboxOpts(), {
@@ -347,10 +363,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       // If expecting a reply, wait for it
       if (params.expectsReply) {
         if (askWaiter) {
-          return {
-            content: [{ type: "text", text: "Already waiting for a reply." }],
-            isError: true,
-          };
+          return textResult("Already waiting for a reply.", false);
         }
 
         const reply = await new Promise<FamilyMessage>((resolve, reject) => {
@@ -385,17 +398,10 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
         });
 
         const attachmentText = formatAttachment(reply.attachments);
-        return {
-          content: [{
-            type: "text",
-            text: `**Reply from parent:**\n${reply.text}${attachmentText}`,
-          }],
-        };
+        return textResult(`**Reply from parent:**\n${reply.text}${attachmentText}`);
       }
 
-      return {
-        content: [{ type: "text", text: `Message sent to parent (${shortId(parentInfo.sessionId)})` }],
-      };
+      return textResult(`Message sent to parent (${shortId(parentInfo.sessionId)})`);
     },
     renderCall(args, theme) {
       const preview = args.message?.toString().slice(0, 80) || "";
@@ -405,8 +411,8 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
     },
     renderResult(result, { isPartial }, theme, context) {
       if (isPartial) return new Text(theme.fg("warning", "Waiting for parent reply..."), 0, 0);
-      const failed = context.isError;
-      const content = result.content?.[0]?.text ?? "";
+      const failed = isFailedResult(result, context);
+      const content = getResultText(result);
       return new Text(
         (failed ? theme.fg("error", "✗ ") : theme.fg("success", "✓ ")) +
         theme.fg(failed ? "error" : "text", content),
@@ -442,10 +448,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
     }),
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       if (!isConnected()) {
-        return {
-          content: [{ type: "text", text: "Family not initialized." }],
-          isError: true,
-        };
+        return textResult("Family not initialized.", false);
       }
 
       // Find the target child
@@ -453,29 +456,24 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       const children = members.filter((m) => m.role === "child");
 
       if (children.length === 0) {
-        return {
-          content: [{ type: "text", text: "No child sessions registered in this family." }],
-          isError: true,
-        };
+        return textResult("No child sessions registered in this family.", false);
       }
 
       let target: FamilyMember | undefined;
       if (params.child) {
-        const lowerChild = params.child.toLowerCase();
+        const childQuery = params.child;
+        const lowerChild = childQuery.toLowerCase();
         target = children.find(
-          (c) => c.sessionId === params.child ||
-            c.sessionId.startsWith(params.child) ||
+          (c) => c.sessionId === childQuery ||
+            c.sessionId.startsWith(childQuery) ||
             c.name?.toLowerCase() === lowerChild,
         );
         if (!target) {
-          return {
-            content: [{ type: "text", text: `Child "${params.child}" not found. Available: ${children.map((c) => c.name || shortId(c.sessionId)).join(", ")}` }],
-            isError: true,
-          };
+          return textResult(`Child "${params.child}" not found. Available: ${children.map((c) => c.name || shortId(c.sessionId)).join(", ")}`, false);
         }
       } else {
         // Default to most recently started child
-        target = children[children.length - 1];
+        target = children[children.length - 1]!;
       }
 
       const messageId = sendMessage(getMailboxOpts(), {
@@ -490,10 +488,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       // If expecting a reply, wait for it
       if (params.expectsReply) {
         if (askWaiter) {
-          return {
-            content: [{ type: "text", text: "Already waiting for a reply." }],
-            isError: true,
-          };
+          return textResult("Already waiting for a reply.", false);
         }
 
         const reply = await new Promise<FamilyMessage>((resolve, reject) => {
@@ -528,20 +523,10 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
         });
 
         const attachmentText = formatAttachment(reply.attachments);
-        return {
-          content: [{
-            type: "text",
-            text: `**Reply from child ${target.name || shortId(target.sessionId)}:**\n${reply.text}${attachmentText}`,
-          }],
-        };
+        return textResult(`**Reply from child ${target.name || shortId(target.sessionId)}:**\n${reply.text}${attachmentText}`);
       }
 
-      return {
-        content: [{
-          type: "text",
-          text: `Message sent to child ${target.name || shortId(target.sessionId)}`,
-        }],
-      };
+      return textResult(`Message sent to child ${target.name || shortId(target.sessionId)}`);
     },
     renderCall(args, theme) {
       const child = args.child?.toString() || "latest";
@@ -553,8 +538,8 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
     },
     renderResult(result, { isPartial }, theme, context) {
       if (isPartial) return new Text(theme.fg("warning", "Waiting for child reply..."), 0, 0);
-      const failed = context.isError;
-      const content = result.content?.[0]?.text ?? "";
+      const failed = isFailedResult(result, context);
+      const content = getResultText(result);
       return new Text(
         (failed ? theme.fg("error", "✗ ") : theme.fg("success", "✓ ")) +
         theme.fg(failed ? "error" : "text", content),
@@ -573,10 +558,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
     parameters: Type.Object({}),
     async execute() {
       if (!isConnected()) {
-        return {
-          content: [{ type: "text", text: "Family not initialized." }],
-          isError: true,
-        };
+        return textResult("Family not initialized.", false);
       }
 
       cleanupStaleMembers(familyId!);
@@ -584,9 +566,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       const selfId = sessionId!;
 
       if (members.length === 0) {
-        return {
-          content: [{ type: "text", text: "No family members registered." }],
-        };
+        return textResult("No family members registered.");
       }
 
       const lines = members.map((m) => {
@@ -598,12 +578,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
         return `${roleLabel}${tag}: ${name} (pid: ${m.pid}, cwd: ${m.cwd}, status: ${status})`;
       });
 
-      return {
-        content: [{
-          type: "text",
-          text: `**Family ${shortId(familyId!)}:**\n${lines.join("\n")}`,
-        }],
-      };
+      return textResult(`**Family ${shortId(familyId!)}:**\n${lines.join("\n")}`);
     },
   });
 
@@ -625,10 +600,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
     }),
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       if (!isConnected()) {
-        return {
-          content: [{ type: "text", text: "Family not initialized." }],
-          isError: true,
-        };
+        return textResult("Family not initialized.", false);
       }
 
       // Find the latest incoming message
@@ -636,10 +608,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       const lastIncoming = messages.filter((m) => m.to === sessionId).pop();
 
       if (!lastIncoming) {
-        return {
-          content: [{ type: "text", text: "No incoming message to reply to." }],
-          isError: true,
-        };
+        return textResult("No incoming message to reply to.", false);
       }
 
       sendMessage(getMailboxOpts(), {
@@ -652,9 +621,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       });
 
       const recipientName = lastIncoming.fromName || shortId(lastIncoming.from);
-      return {
-        content: [{ type: "text", text: `Reply sent to ${recipientName}` }],
-      };
+      return textResult(`Reply sent to ${recipientName}`);
     },
     renderCall(args, theme) {
       const preview = args.message?.toString().slice(0, 80) || "";
@@ -663,8 +630,8 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       return new Text(text, 0, 0);
     },
     renderResult(result, _options, theme, context) {
-      const failed = context.isError;
-      const content = result.content?.[0]?.text ?? "";
+      const failed = isFailedResult(result, context);
+      const content = getResultText(result);
       return new Text(
         (failed ? theme.fg("error", "✗ ") : theme.fg("success", "✓ ")) +
         theme.fg(failed ? "error" : "text", content),
