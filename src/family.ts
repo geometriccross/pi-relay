@@ -99,8 +99,8 @@ export function buildSelfEnv(
 /**
  * Register a family member by writing a JSON file to the family directory.
  */
-export function registerMember(familyId: string, member: FamilyMember): void {
-  const dir = join(FAMILY_DIR, familyId);
+export function registerMember(familyId: string, member: FamilyMember, familyDir = FAMILY_DIR): void {
+  const dir = join(familyDir, familyId);
   mkdirSync(dir, { recursive: true });
   const filePath = join(dir, `${member.sessionId}.json`);
   writeFileSync(filePath, JSON.stringify(member, null, 2), "utf-8");
@@ -109,8 +109,8 @@ export function registerMember(familyId: string, member: FamilyMember): void {
 /**
  * Unregister a family member.
  */
-export function unregisterMember(familyId: string, sessionId: string): void {
-  const filePath = join(FAMILY_DIR, familyId, `${sessionId}.json`);
+export function unregisterMember(familyId: string, sessionId: string, familyDir = FAMILY_DIR): void {
+  const filePath = join(familyDir, familyId, `${sessionId}.json`);
   try {
     unlinkSync(filePath);
   } catch {
@@ -121,8 +121,8 @@ export function unregisterMember(familyId: string, sessionId: string): void {
 /**
  * List all members of a family.
  */
-export function listFamilyMembers(familyId: string): FamilyMember[] {
-  const dir = join(FAMILY_DIR, familyId);
+export function listFamilyMembers(familyId: string, familyDir = FAMILY_DIR): FamilyMember[] {
+  const dir = join(familyDir, familyId);
   if (!existsSync(dir)) return [];
 
   const members: FamilyMember[] = [];
@@ -149,14 +149,14 @@ export function listFamilyMembers(familyId: string): FamilyMember[] {
 /**
  * Clean up stale member registrations (where the PID is no longer alive).
  */
-export function cleanupStaleMembers(familyId: string): void {
-  const members = listFamilyMembers(familyId);
+export function cleanupStaleMembers(familyId: string, familyDir = FAMILY_DIR): void {
+  const members = listFamilyMembers(familyId, familyDir);
   for (const member of members) {
     try {
       process.kill(member.pid, 0);
     } catch {
       // Process is dead, unregister
-      unregisterMember(familyId, member.sessionId);
+      unregisterMember(familyId, member.sessionId, familyDir);
     }
   }
 }
