@@ -40,6 +40,7 @@ import {
   type MailboxOptions,
 } from "./mailbox.js";
 import type { FamilyMessage, FamilyMember, FamilyConfig } from "./types.js";
+import { isPiLaunchCommand, prependEnv } from "./shell.js";
 
 // ── Config ──────────────────────────────────────────────────────────────
 
@@ -275,28 +276,8 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
       childSessionId,
     );
 
-    // Prepend env var exports to the command
-    const envExports = Object.entries(envVars)
-      .map(([k, v]) => `${k}=${shellEscape(v)}`)
-      .join(" ");
-
-    event.input.command = `${envExports} ${command}`;
+    event.input.command = prependEnv(command, envVars);
   });
-
-  function isPiLaunchCommand(command: string): boolean {
-    // Match patterns like: pi, pi ..., npx pi, pnpm pi
-    const trimmed = command.trim();
-    return /^(pi\b|npx\s+pi\b|pnpm\s+pi\b|bunx\s+pi\b)/.test(trimmed) ||
-      /\bpi\s*$/.test(trimmed) ||
-      /\bpi\s+--/.test(trimmed) ||
-      /\bpi\s+-[a-z]/.test(trimmed);
-  }
-
-  function shellEscape(value: string): string {
-    // Simple escaping for env var values
-    if (/^[a-zA-Z0-9_./:@-]+$/.test(value)) return value;
-    return `'${value.replace(/'/g, "'\\''")}'`;
-  }
 
   // ── Custom message renderer ─────────────────────────────────────────
 
