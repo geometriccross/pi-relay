@@ -4,20 +4,22 @@
   "description": "Pi extension for parent-child shell session communication",
   "main": "src/index.ts",
   "pi": {
-    "extensions": ["./src/index.ts"]
+    "extensions": [
+      "./src/index.ts"
+    ]
   },
   "scripts": {
     "test": "tsx --test test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
-  "dependencies": {},
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "latest",
     "@earendil-works/pi-tui": "latest",
-    "typebox": "latest",
+    "@types/node": "^22.0.0",
+    "fast-check": "^4.8.0",
     "tsx": "^4.20.0",
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0"
+    "typebox": "latest",
+    "typescript": "^5.7.0"
   }
 }

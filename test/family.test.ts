@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fc from "fast-check";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,10 +11,16 @@ import {
   FAMILY_ENV_FAMILY_ID,
   FAMILY_ENV_PARENT_NAME,
   FAMILY_ENV_PARENT_SESSION,
+  FAMILY_ENV_SESSION_ID,
+  FAMILY_ENV_ROLE,
 } from "../src/types.js";
 
 const originalEnv = { ...process.env };
 let cleanupDirs: string[] = [];
+
+const envValue = fc
+  .string({ minLength: 1, maxLength: 40 })
+  .filter((value) => !value.includes("\0") && value.trim().length > 0);
 
 afterEach(() => {
   process.env = { ...originalEnv };
@@ -46,6 +53,41 @@ test("buildChildEnv includes all variables required by a child session", () => {
       PI_FAMILY_PARENT_NAME: "Parent",
       PI_FAMILY_CHILD_INDEX: "3",
     },
+  );
+});
+
+test("buildChildEnv values round-trip through process.env parent detection", () => {
+  fc.assert(
+    fc.property(
+      envValue,
+      envValue,
+      envValue,
+      envValue,
+      fc.integer({ min: 0, max: 10_000 }),
+      (parentSessionId, parentName, familyId, childSessionId, childIndex) => {
+        const childEnv = buildChildEnv(
+          parentSessionId,
+          parentName,
+          familyId,
+          childIndex,
+          childSessionId,
+        );
+
+        process.env[FAMILY_ENV_SESSION_ID] = childEnv[FAMILY_ENV_SESSION_ID];
+        process.env[FAMILY_ENV_FAMILY_ID] = childEnv[FAMILY_ENV_FAMILY_ID];
+        process.env[FAMILY_ENV_ROLE] = childEnv[FAMILY_ENV_ROLE];
+        process.env[FAMILY_ENV_PARENT_SESSION] = childEnv[FAMILY_ENV_PARENT_SESSION];
+        process.env[FAMILY_ENV_PARENT_NAME] = childEnv[FAMILY_ENV_PARENT_NAME];
+        process.env[FAMILY_ENV_CHILD_INDEX] = childEnv[FAMILY_ENV_CHILD_INDEX];
+
+        assert.deepEqual(detectParentFromEnv(), {
+          familyId: familyId.trim(),
+          parentSessionId: parentSessionId.trim(),
+          parentName: parentName.trim(),
+          childIndex,
+        });
+      },
+    ),
   );
 });
 

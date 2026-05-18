@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fc from "fast-check";
 import { appendFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -8,6 +9,14 @@ import { readMessages, sendMessage } from "../src/mailbox.js";
 import type { MailboxOptions } from "../src/mailbox.js";
 
 let cleanupDirs: string[] = [];
+
+const idValue = fc
+  .string({ minLength: 1, maxLength: 24 })
+  .filter((value) => !value.includes("\0") && !value.includes("/") && !value.includes("\\"));
+
+const textValue = fc
+  .string({ maxLength: 120 })
+  .filter((value) => !value.includes("\0"));
 
 function createMailboxOptions(): MailboxOptions {
   const familyDir = mkdtempSync(join(tmpdir(), "pi-family-test-"));
@@ -65,4 +74,49 @@ test("readMessages skips malformed JSONL lines", () => {
     "valid before malformed line",
     "valid after malformed line",
   ]);
+});
+
+test("mailbox preserves randomized message order and payloads", () => {
+  fc.assert(
+    fc.property(
+      idValue,
+      fc.array(
+        fc.record({
+          from: idValue,
+          fromName: fc.option(textValue, { nil: undefined }),
+          text: textValue,
+        }),
+        { minLength: 1, maxLength: 25 },
+      ),
+      (recipient, messagesToSend) => {
+        const opts = createMailboxOptions();
+
+        for (const message of messagesToSend) {
+          sendMessage(opts, {
+            from: message.from,
+            fromName: message.fromName,
+            to: recipient,
+            text: message.text,
+          });
+        }
+
+        const messages = readMessages(opts, recipient);
+
+        assert.deepEqual(
+          messages.map((message) => ({
+            from: message.from,
+            fromName: message.fromName,
+            to: message.to,
+            text: message.text,
+          })),
+          messagesToSend.map((message) => ({
+            from: message.from,
+            fromName: message.fromName,
+            to: recipient,
+            text: message.text,
+          })),
+        );
+      },
+    ),
+  );
 });
