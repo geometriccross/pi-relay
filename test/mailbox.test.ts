@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import fc from "fast-check";
-import { appendFileSync, mkdtempSync, rmSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, test } from "node:test";
 
-import { readMessages, sendMessage } from "../src/mailbox.js";
+import { readMessages, readUnreadMessages, sendMessage } from "../src/mailbox.js";
 import type { MailboxOptions } from "../src/mailbox.js";
 
 let cleanupDirs: string[] = [];
@@ -74,6 +74,29 @@ test("readMessages skips malformed JSONL lines", () => {
     "valid before malformed line",
     "valid after malformed line",
   ]);
+});
+
+test("readUnreadMessages includes messages at the same timestamp as the cursor", () => {
+  const opts = createMailboxOptions();
+  const timestamp = "2026-01-01T00:00:00.000Z";
+
+  // Manually craft all messages with identical timestamps
+  const mailboxDir = join(opts.familyDir, opts.familyId, "mailboxes");
+  mkdirSync(mailboxDir, { recursive: true });
+  const mailboxPath = join(mailboxDir, "b.jsonl");
+  appendFileSync(mailboxPath, JSON.stringify({
+    id: "m1", from: "a", to: "b", text: "msg-1", timestamp,
+  }) + "\n", "utf-8");
+  appendFileSync(mailboxPath, JSON.stringify({
+    id: "m2", from: "a", to: "b", text: "msg-2", timestamp,
+  }) + "\n", "utf-8");
+  appendFileSync(mailboxPath, JSON.stringify({
+    id: "m3", from: "a", to: "b", text: "msg-3", timestamp,
+  }) + "\n", "utf-8");
+
+  // Using the same timestamp as cursor: all messages should be included
+  const unread = readUnreadMessages(opts, "b", timestamp);
+  assert.deepEqual(unread.map((m) => m.text), ["msg-1", "msg-2", "msg-3"]);
 });
 
 test("mailbox preserves randomized message order and payloads", () => {
