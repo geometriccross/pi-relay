@@ -41,6 +41,7 @@ import {
 } from "./mailbox.js";
 import type { FamilyMessage, FamilyMember, FamilyConfig } from "./types.js";
 import { isPiLaunchCommand, prependEnv } from "./shell.js";
+import { resolveChild, findLastIncoming } from "./tool-logic.js";
 
 // ── Config ──────────────────────────────────────────────────────────────
 
@@ -459,21 +460,9 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
         return textResult("No child sessions registered in this family.", false);
       }
 
-      let target: FamilyMember | undefined;
-      if (params.child) {
-        const childQuery = params.child;
-        const lowerChild = childQuery.toLowerCase();
-        target = children.find(
-          (c) => c.sessionId === childQuery ||
-            c.sessionId.startsWith(childQuery) ||
-            c.name?.toLowerCase() === lowerChild,
-        );
-        if (!target) {
-          return textResult(`Child "${params.child}" not found. Available: ${children.map((c) => c.name || shortId(c.sessionId)).join(", ")}`, false);
-        }
-      } else {
-        // Default to most recently started child
-        target = children[children.length - 1]!;
+      const target = resolveChild(children, params.child);
+      if (!target) {
+        return textResult(`Child "${params.child}" not found. Available: ${children.map((c) => c.name || shortId(c.sessionId)).join(", ")}`, false);
       }
 
       const messageId = sendMessage(getMailboxOpts(), {
@@ -605,7 +594,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
 
       // Find the latest incoming message
       const messages = readMessages(getMailboxOpts(), sessionId!);
-      const lastIncoming = messages.filter((m) => m.to === sessionId).pop();
+      const lastIncoming = findLastIncoming(messages, sessionId!);
 
       if (!lastIncoming) {
         return textResult("No incoming message to reply to.", false);
