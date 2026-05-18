@@ -17,9 +17,9 @@ test("shellEscape preserves safe values and quotes unsafe values", () => {
 test("prependEnv prepends escaped environment assignments", () => {
   assert.equal(
     prependEnv("pi --model test", {
-      PI_FAMILY_ID: "family-1",
-      PI_FAMILY_PARENT_NAME: "Parent Session",
+      PI_RELAY_ID: "family-1",
+      PI_RELAY_PARENT_NAME: "Parent Session",
     }),
-    "PI_FAMILY_ID=family-1 PI_FAMILY_PARENT_NAME='Parent Session' pi --model test",
+    "PI_RELAY_ID=family-1 PI_RELAY_PARENT_NAME='Parent Session' pi --model test",
   );
 });

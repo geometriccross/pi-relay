@@ -8,7 +8,7 @@ import { test } from "node:test";
 
 import { sendMessage } from "../../src/mailbox.js";
 
-const RUN_E2E = process.env.PI_FAMILY_RUN_E2E === "1";
+const RUN_E2E = process.env.PI_RELAY_RUN_E2E === "1";
 const PI_BIN = process.env.PI_E2E_BIN ?? "pi";
 const PI_E2E_MODEL = "github-copilot/claude-haiku-4.5";
 const REPO_ROOT = resolve(import.meta.dirname, "../..");
@@ -141,32 +141,32 @@ function containsText(messages: unknown[], text: string): boolean {
 
 test(
   "e2e: two real pi RPC sessions exchange family mailbox messages",
-  { skip: RUN_E2E ? false : "Set PI_FAMILY_RUN_E2E=1 or run npm run test:e2e", timeout: 90_000 },
+  { skip: RUN_E2E ? false : "Set PI_RELAY_RUN_E2E=1 or run npm run test:e2e", timeout: 90_000 },
   async () => {
-    const tmp = mkdtempSync(join(tmpdir(), "pi-family-e2e-"));
+    const tmp = mkdtempSync(join(tmpdir(), "pi-relay-e2e-"));
     const familyDir = join(tmp, "family");
     const familyId = `family-e2e-${randomUUID()}`;
     const parentSessionId = `parent-e2e-${randomUUID()}`;
     const childSessionId = `child-e2e-${randomUUID()}`;
 
     const commonEnv = {
-      PI_FAMILY_DIR: familyDir,
-      PI_FAMILY_ID: familyId,
+      PI_RELAY_DIR: familyDir,
+      PI_RELAY_ID: familyId,
     };
 
     const parent = new RpcPiProcess("parent", {
       ...commonEnv,
-      PI_FAMILY_SESSION_ID: parentSessionId,
-      PI_FAMILY_ROLE: "parent",
+      PI_RELAY_SESSION_ID: parentSessionId,
+      PI_RELAY_ROLE: "parent",
     });
 
     const child = new RpcPiProcess("child", {
       ...commonEnv,
-      PI_FAMILY_SESSION_ID: childSessionId,
-      PI_FAMILY_ROLE: "child",
-      PI_FAMILY_PARENT_SESSION: parentSessionId,
-      PI_FAMILY_PARENT_NAME: "e2e-parent",
-      PI_FAMILY_CHILD_INDEX: "1",
+      PI_RELAY_SESSION_ID: childSessionId,
+      PI_RELAY_ROLE: "child",
+      PI_RELAY_PARENT_SESSION: parentSessionId,
+      PI_RELAY_PARENT_NAME: "e2e-parent",
+      PI_RELAY_CHILD_INDEX: "1",
     });
 
     try {
