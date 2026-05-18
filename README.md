@@ -28,7 +28,18 @@ List all sessions in the current family (parent + children).
 
 ## Configuration
 
-Create `~/.pi/agent/family/config.json`:
+Add configuration under the `pi-relay` key in `~/.pi/agent/settings.json`:
+
+```json
+{
+  "pi-relay": {
+    "enabled": true,
+    "maxMailboxSize": 1000000,
+    "pollIntervalMs": 1000,
+    "askTimeoutMs": 600000
+  }
+}
+```
 
 | Key | Type | Default | Description |
 |---|---|---|---|
