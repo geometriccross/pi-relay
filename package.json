@@ -1,5 +1,5 @@
 {
-  "name": "pi-family",
+  "name": "pi-relay",
   "version": "0.1.0",
   "description": "Pi extension for parent-child shell session communication",
   "main": "src/index.ts",
@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "tsx --test \"test/**/*.test.ts\"",
-    "test:e2e": "npm run build && PI_FAMILY_RUN_E2E=1 tsx --test \"test/e2e/**/*.test.ts\"",
+    "test:e2e": "npm run build && PI_RELAY_RUN_E2E=1 tsx --test \"test/e2e/pi-relay.e2e.test.ts\"",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
