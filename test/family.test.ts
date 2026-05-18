@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, test } from "node:test";
 
-import { buildChildEnv, detectParentFromEnv, getFamilyDir, listFamilyMembers, registerMember } from "../src/family.js";
+import { buildChildEnv, detectParentFromEnv, detectSelfFromEnv, getFamilyDir, listFamilyMembers, registerMember } from "../src/family.js";
 import {
   FAMILY_ENV_CHILD_INDEX,
   FAMILY_ENV_FAMILY_ID,
@@ -32,6 +32,18 @@ test("getFamilyDir uses PI_FAMILY_DIR when set", () => {
   process.env.PI_FAMILY_DIR = "/tmp/pi-family-e2e";
 
   assert.equal(getFamilyDir(), "/tmp/pi-family-e2e");
+});
+
+test("detectSelfFromEnv reads a seeded parent session", () => {
+  process.env.PI_FAMILY_SESSION_ID = "parent-e2e";
+  process.env.PI_FAMILY_ID = "family-e2e";
+  process.env.PI_FAMILY_ROLE = "parent";
+
+  assert.deepEqual(detectSelfFromEnv(), {
+    sessionId: "parent-e2e",
+    familyId: "family-e2e",
+    role: "parent",
+  });
 });
 
 test("detectParentFromEnv normalizes invalid child index to zero", () => {

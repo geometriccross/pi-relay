@@ -23,6 +23,7 @@ import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 import {
   detectParentFromEnv,
   detectOwnSessionId,
+  detectSelfFromEnv,
   buildChildEnv,
   buildSelfEnv,
   registerMember,
@@ -209,8 +210,9 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     if (!config.enabled) return;
 
-    // Check for existing session ID from env
+    // Check for existing session identity from env
     const existingId = detectOwnSessionId();
+    const selfDetection = detectSelfFromEnv();
     const parentDetection = detectParentFromEnv();
 
     sessionId = existingId ?? ctx.sessionManager.getSessionId();
@@ -224,6 +226,10 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
         name: parentDetection.parentName,
         childIndex: parentDetection.childIndex,
       };
+    } else if (selfDetection) {
+      // This is an externally seeded parent/session (used by e2e and orchestrators)
+      role = selfDetection.role;
+      familyId = selfDetection.familyId;
     } else {
       // This is a parent session
       role = "parent";

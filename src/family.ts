@@ -63,6 +63,28 @@ export function detectOwnSessionId(): string | null {
 }
 
 /**
+ * Detect a pre-seeded self identity from environment variables.
+ * Useful for tests and externally orchestrated parent sessions.
+ */
+export function detectSelfFromEnv(): {
+  sessionId: string;
+  familyId: string;
+  role: "parent" | "child";
+} | null {
+  const sessionId = process.env[FAMILY_ENV_SESSION_ID]?.trim();
+  const familyId = process.env[FAMILY_ENV_FAMILY_ID]?.trim();
+  const roleEnv = process.env[FAMILY_ENV_ROLE]?.trim();
+
+  if (!sessionId || !familyId) return null;
+
+  return {
+    sessionId,
+    familyId,
+    role: roleEnv === "child" ? "child" : "parent",
+  };
+}
+
+/**
  * Generate environment variables to inject when spawning a child pi.
  */
 export function buildChildEnv(
