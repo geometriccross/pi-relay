@@ -1,11 +1,11 @@
 /**
- * pi-family — Parent-child shell session communication extension.
+ * pi-relay — Parent-child shell session communication extension.
  *
  * Enables pi sessions launched from shell (bash) to communicate
  * as parent and child without manual session discovery.
  *
  * Architecture:
- * - Parent intercepts bash tool_call to inject PI_FAMILY_* env vars
+ * - Parent intercepts bash tool_call to inject PI_RELAY_* env vars
  * - Child detects parent via env vars on startup
  * - File-based mailbox IPC (no broker process needed)
  * - Auto-registration in shared family directory
@@ -106,7 +106,7 @@ function formatAttachment(att: FamilyMessage["attachments"]): string {
 
 // ── Extension ───────────────────────────────────────────────────────────
 
-export default function piFamilyExtension(pi: ExtensionAPI) {
+export default function piRelayExtension(pi: ExtensionAPI) {
   const config = loadConfig();
 
   // Extension state per session
@@ -256,7 +256,7 @@ export default function piFamilyExtension(pi: ExtensionAPI) {
 
     const roleLabel = role === "parent" ? "Parent" : `Child #${parentInfo?.childIndex ?? 0}`;
     if (ctx.hasUI) {
-      ctx.ui.notify(`pi-family: ${roleLabel} session started (family: ${shortId(familyId)})`, "info");
+      ctx.ui.notify(`pi-relay: ${roleLabel} session started (family: ${shortId(familyId)})`, "info");
     }
   });
 

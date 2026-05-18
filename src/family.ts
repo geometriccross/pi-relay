@@ -2,7 +2,7 @@
  * Family relationship detection via environment variables.
  *
  * When a parent pi session spawns a child pi via bash, the extension:
- * 1. Intercepts the bash tool_call to inject PI_FAMILY_* env vars
+ * 1. Intercepts the bash tool_call to inject PI_RELAY_* env vars
  * 2. The child pi reads those env vars on startup to discover its parent
  * 3. Both sessions register in a shared family directory
  */
@@ -13,19 +13,19 @@ import { homedir } from "os";
 import { randomUUID } from "crypto";
 import type { FamilyMember, FamilyConfig } from "./types.js";
 import {
-  FAMILY_ENV_SESSION_ID,
-  FAMILY_ENV_FAMILY_ID,
-  FAMILY_ENV_ROLE,
-  FAMILY_ENV_PARENT_SESSION,
-  FAMILY_ENV_PARENT_NAME,
-  FAMILY_ENV_CHILD_INDEX,
-  FAMILY_ENV_DIR,
+  RELAY_ENV_SESSION_ID,
+  RELAY_ENV_RELAY_ID,
+  RELAY_ENV_ROLE,
+  RELAY_ENV_PARENT_SESSION,
+  RELAY_ENV_PARENT_NAME,
+  RELAY_ENV_CHILD_INDEX,
+  RELAY_ENV_DIR,
 } from "./types.js";
 
 const FAMILY_DIR = join(homedir(), ".pi/agent/family");
 
 export function getFamilyDir(): string {
-  return process.env[FAMILY_ENV_DIR]?.trim() || FAMILY_DIR;
+  return process.env[RELAY_ENV_DIR]?.trim() || FAMILY_DIR;
 }
 
 /**
@@ -37,10 +37,10 @@ export function detectParentFromEnv(): {
   parentName?: string;
   childIndex: number;
 } | null {
-  const familyId = process.env[FAMILY_ENV_FAMILY_ID]?.trim();
-  const parentSession = process.env[FAMILY_ENV_PARENT_SESSION]?.trim();
-  const parentName = process.env[FAMILY_ENV_PARENT_NAME]?.trim() || undefined;
-  const childIndexStr = process.env[FAMILY_ENV_CHILD_INDEX]?.trim();
+  const familyId = process.env[RELAY_ENV_RELAY_ID]?.trim();
+  const parentSession = process.env[RELAY_ENV_PARENT_SESSION]?.trim();
+  const parentName = process.env[RELAY_ENV_PARENT_NAME]?.trim() || undefined;
+  const childIndexStr = process.env[RELAY_ENV_CHILD_INDEX]?.trim();
 
   if (!familyId || !parentSession) return null;
 
@@ -55,11 +55,11 @@ export function detectParentFromEnv(): {
 }
 
 /**
- * Detect if this session itself has a PI_FAMILY_SESSION_ID set
+ * Detect if this session itself has a PI_RELAY_SESSION_ID set
  * (meaning the extension already assigned it one).
  */
 export function detectOwnSessionId(): string | null {
-  return process.env[FAMILY_ENV_SESSION_ID]?.trim() ?? null;
+  return process.env[RELAY_ENV_SESSION_ID]?.trim() ?? null;
 }
 
 /**
@@ -71,9 +71,9 @@ export function detectSelfFromEnv(): {
   familyId: string;
   role: "parent" | "child";
 } | null {
-  const sessionId = process.env[FAMILY_ENV_SESSION_ID]?.trim();
-  const familyId = process.env[FAMILY_ENV_FAMILY_ID]?.trim();
-  const roleEnv = process.env[FAMILY_ENV_ROLE]?.trim();
+  const sessionId = process.env[RELAY_ENV_SESSION_ID]?.trim();
+  const familyId = process.env[RELAY_ENV_RELAY_ID]?.trim();
+  const roleEnv = process.env[RELAY_ENV_ROLE]?.trim();
 
   if (!sessionId || !familyId) return null;
 
@@ -95,12 +95,12 @@ export function buildChildEnv(
   childSessionId: string,
 ): Record<string, string> {
   return {
-    [FAMILY_ENV_SESSION_ID]: childSessionId,
-    [FAMILY_ENV_FAMILY_ID]: familyId,
-    [FAMILY_ENV_ROLE]: "child",
-    [FAMILY_ENV_PARENT_SESSION]: parentSessionId,
-    ...(parentName ? { [FAMILY_ENV_PARENT_NAME]: parentName } : {}),
-    [FAMILY_ENV_CHILD_INDEX]: String(childIndex),
+    [RELAY_ENV_SESSION_ID]: childSessionId,
+    [RELAY_ENV_RELAY_ID]: familyId,
+    [RELAY_ENV_ROLE]: "child",
+    [RELAY_ENV_PARENT_SESSION]: parentSessionId,
+    ...(parentName ? { [RELAY_ENV_PARENT_NAME]: parentName } : {}),
+    [RELAY_ENV_CHILD_INDEX]: String(childIndex),
   };
 }
 
@@ -113,9 +113,9 @@ export function buildSelfEnv(
   role: "parent" | "child",
 ): Record<string, string> {
   return {
-    [FAMILY_ENV_SESSION_ID]: sessionId,
-    [FAMILY_ENV_FAMILY_ID]: familyId,
-    [FAMILY_ENV_ROLE]: role,
+    [RELAY_ENV_SESSION_ID]: sessionId,
+    [RELAY_ENV_RELAY_ID]: familyId,
+    [RELAY_ENV_ROLE]: role,
   };
 }
 

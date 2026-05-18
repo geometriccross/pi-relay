@@ -1,5 +1,5 @@
 /**
- * File-based mailbox IPC for pi-family.
+ * File-based mailbox IPC for pi-relay.
  *
  * Each session has a mailbox file under ~/.pi/agent/family/<familyId>/mailboxes/<sessionId>.jsonl
  * Messages are appended as JSONL. The recipient polls their mailbox for new messages.

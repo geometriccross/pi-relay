@@ -1,5 +1,5 @@
 /**
- * Shared types for pi-family extension.
+ * Shared types for pi-relay extension.
  */
 
 /** A message in the mailbox */
@@ -53,10 +53,10 @@ export interface FamilyConfig {
   askTimeoutMs: number;
 }
 
-export const FAMILY_ENV_SESSION_ID = "PI_FAMILY_SESSION_ID";
-export const FAMILY_ENV_FAMILY_ID = "PI_FAMILY_ID";
-export const FAMILY_ENV_ROLE = "PI_FAMILY_ROLE";
-export const FAMILY_ENV_PARENT_SESSION = "PI_FAMILY_PARENT_SESSION";
-export const FAMILY_ENV_PARENT_NAME = "PI_FAMILY_PARENT_NAME";
-export const FAMILY_ENV_CHILD_INDEX = "PI_FAMILY_CHILD_INDEX";
-export const FAMILY_ENV_DIR = "PI_FAMILY_DIR";
+export const RELAY_ENV_SESSION_ID = "PI_RELAY_SESSION_ID";
+export const RELAY_ENV_RELAY_ID = "PI_RELAY_ID";
+export const RELAY_ENV_ROLE = "PI_RELAY_ROLE";
+export const RELAY_ENV_PARENT_SESSION = "PI_RELAY_PARENT_SESSION";
+export const RELAY_ENV_PARENT_NAME = "PI_RELAY_PARENT_NAME";
+export const RELAY_ENV_CHILD_INDEX = "PI_RELAY_CHILD_INDEX";
+export const RELAY_ENV_DIR = "PI_RELAY_DIR";

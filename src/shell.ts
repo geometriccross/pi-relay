@@ -1,4 +1,4 @@
-/** Pure shell command helpers for PI_FAMILY_* env injection. */
+/** Pure shell command helpers for PI_RELAY_* env injection. */
 
 /** Detect if a shell command launches a pi session. */
 export function isPiLaunchCommand(command: string): boolean {
