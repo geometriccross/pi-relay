@@ -107,7 +107,7 @@ export function readUnreadMessages(
   afterTimestamp: string,
 ): FamilyMessage[] {
   const all = readMessages(opts, sessionId);
-  return all.filter((m) => m.timestamp >= afterTimestamp);
+  return all.filter((m) => m.timestamp > afterTimestamp);
 }
 
 /**

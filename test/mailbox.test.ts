@@ -76,11 +76,12 @@ test("readMessages skips malformed JSONL lines", () => {
   ]);
 });
 
-test("readUnreadMessages includes messages at the same timestamp as the cursor", () => {
+test("readUnreadMessages excludes messages at the same timestamp as the cursor", () => {
   const opts = createMailboxOptions();
   const timestamp = "2026-01-01T00:00:00.000Z";
+  const afterTimestamp = "2026-01-01T00:00:00.001Z";
 
-  // Manually craft all messages with identical timestamps
+  // Manually craft messages with identical timestamps
   const mailboxDir = join(opts.familyDir, opts.familyId, "mailboxes");
   mkdirSync(mailboxDir, { recursive: true });
   const mailboxPath = join(mailboxDir, "b.jsonl");
@@ -91,12 +92,13 @@ test("readUnreadMessages includes messages at the same timestamp as the cursor",
     id: "m2", from: "a", to: "b", text: "msg-2", timestamp,
   }) + "\n", "utf-8");
   appendFileSync(mailboxPath, JSON.stringify({
-    id: "m3", from: "a", to: "b", text: "msg-3", timestamp,
+    id: "m3", from: "a", to: "b", text: "msg-3", timestamp: afterTimestamp,
   }) + "\n", "utf-8");
 
-  // Using the same timestamp as cursor: all messages should be included
+  // Using the same timestamp as cursor: old messages should be excluded
+  // Only messages strictly after the cursor should be returned
   const unread = readUnreadMessages(opts, "b", timestamp);
-  assert.deepEqual(unread.map((m) => m.text), ["msg-1", "msg-2", "msg-3"]);
+  assert.deepEqual(unread.map((m) => m.text), ["msg-3"]);
 });
 
 test("mailbox preserves randomized message order and payloads", () => {
