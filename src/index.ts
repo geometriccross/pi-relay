@@ -97,6 +97,7 @@ export default function piRelayExtension(pi: ExtensionAPI) {
   } | null = null;
   let childCounter = 0;
   let lastMailboxCursor = "";
+  const deliveredMessageIds = new Set<string>();
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let askWaiter: {
     fromSessionId: string;
@@ -145,12 +146,17 @@ export default function piRelayExtension(pi: ExtensionAPI) {
       ? readUnreadMessages(getMailboxOpts(), sessionId!, lastMailboxCursor)
       : readMessages(getMailboxOpts(), sessionId!);
 
-    if (messages.length === 0) return;
+    // Filter out already-delivered messages by ID
+    const newMessages = messages.filter((m) => !deliveredMessageIds.has(m.id));
+
+    if (newMessages.length === 0) return;
 
     // Update cursor
     lastMailboxCursor = messages[messages.length - 1]!.timestamp;
 
-    for (const msg of messages) {
+    for (const msg of newMessages) {
+      deliveredMessageIds.add(msg.id);
+
       // Check if this is a reply to a pending ask
       if (askWaiter && msg.replyTo === askWaiter.replyTo) {
         askWaiter.resolve(msg);
@@ -256,6 +262,7 @@ export default function piRelayExtension(pi: ExtensionAPI) {
     parentInfo = null;
     childCounter = 0;
     lastMailboxCursor = "";
+    deliveredMessageIds.clear();
   });
 
   // ── Intercept bash tool calls to inject family env vars ─────────────
