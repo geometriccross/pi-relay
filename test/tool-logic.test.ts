@@ -56,6 +56,15 @@ test("resolveChild returns undefined when query matches nothing", () => {
   assert.equal(result, undefined);
 });
 
+test("resolveChild ignores parent-role members", () => {
+  const mixed: FamilyMember[] = [
+    { sessionId: "parent-1", role: "parent", pid: 1, cwd: "/", startedAt: "", lastActivity: "" },
+    { sessionId: "child-1", role: "child", pid: 2, cwd: "/", startedAt: "", lastActivity: "" },
+  ];
+  const result = resolveChild(mixed.filter((m) => m.role === "child"), undefined);
+  assert.equal(result?.sessionId, "child-1");
+});
+
 // ── findLastIncoming ──────────────────────────────────────────────────────
 
 test("findLastIncoming returns undefined when no messages exist", () => {
