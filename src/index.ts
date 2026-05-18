@@ -15,9 +15,6 @@ import type { AgentToolResult, ExtensionAPI, ExtensionContext } from "@earendil-
 import { Type } from "typebox";
 import { Text } from "@earendil-works/pi-tui";
 import { randomUUID } from "crypto";
-import { existsSync, readFileSync, mkdirSync } from "fs";
-import { join } from "path";
-import { homedir } from "os";
 import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 
 import {
@@ -40,30 +37,10 @@ import {
   getLatestTimestamp,
   type MailboxOptions,
 } from "./mailbox.js";
-import type { FamilyMessage, FamilyMember, FamilyConfig } from "./types.js";
+import type { FamilyMessage, FamilyMember } from "./types.js";
 import { isPiLaunchCommand, prependEnv } from "./shell.js";
+import { loadConfig } from "./config.js";
 import { resolveChild, findLastIncoming } from "./tool-logic.js";
-
-// ── Config ──────────────────────────────────────────────────────────────
-
-const CONFIG_PATH = join(homedir(), ".pi/agent/family/config.json");
-
-const DEFAULT_CONFIG: FamilyConfig = {
-  enabled: true,
-  maxMailboxSize: 1_000_000, // 1MB
-  pollIntervalMs: 1000,
-  askTimeoutMs: 10 * 60 * 1000, // 10 minutes
-};
-
-function loadConfig(): FamilyConfig {
-  if (!existsSync(CONFIG_PATH)) return { ...DEFAULT_CONFIG };
-  try {
-    const raw = readFileSync(CONFIG_PATH, "utf-8");
-    return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
-  } catch {
-    return { ...DEFAULT_CONFIG };
-  }
-}
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
