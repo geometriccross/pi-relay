@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, test } from "node:test";
 
-import { buildChildEnv, detectParentFromEnv, listFamilyMembers, registerMember } from "../src/family.js";
+import { buildChildEnv, detectParentFromEnv, getFamilyDir, listFamilyMembers, registerMember } from "../src/family.js";
 import {
   FAMILY_ENV_CHILD_INDEX,
   FAMILY_ENV_FAMILY_ID,
@@ -26,6 +26,12 @@ afterEach(() => {
   process.env = { ...originalEnv };
   for (const dir of cleanupDirs) rmSync(dir, { recursive: true, force: true });
   cleanupDirs = [];
+});
+
+test("getFamilyDir uses PI_FAMILY_DIR when set", () => {
+  process.env.PI_FAMILY_DIR = "/tmp/pi-family-e2e";
+
+  assert.equal(getFamilyDir(), "/tmp/pi-family-e2e");
 });
 
 test("detectParentFromEnv normalizes invalid child index to zero", () => {

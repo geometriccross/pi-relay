@@ -19,12 +19,13 @@ import {
   FAMILY_ENV_PARENT_SESSION,
   FAMILY_ENV_PARENT_NAME,
   FAMILY_ENV_CHILD_INDEX,
+  FAMILY_ENV_DIR,
 } from "./types.js";
 
 const FAMILY_DIR = join(homedir(), ".pi/agent/family");
 
 export function getFamilyDir(): string {
-  return FAMILY_DIR;
+  return process.env[FAMILY_ENV_DIR]?.trim() || FAMILY_DIR;
 }
 
 /**
